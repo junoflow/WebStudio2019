@@ -39,19 +39,35 @@ class UserList(Resource):
         r_json = request.get_json()
         email = r_json['email']
         password = r_json['password']
+        r=[]
         if os.path.exists('users.json'):
-	    with open('users.json', 'r') as fp:
+            with open('users.json', 'r') as fp:
                 r = json.loads(fp.read())
         for d in r:
             if email == d['email']:
                 d['password'] = password
-	    else:
-	        return '{} does not exist.'.format(email)
+                break
+            else:
+                return '{} does not exist'.format(email)
         with open('users.json', 'w') as fp:
             fp.write(json.dumps(r))
         return 'The password of {} is updated'.format(email)
 
     def delete(self):
+        r_json = request.get_json()
+        email = r_json['email']
+        r = []
+        if os.path.exists('users.json'):
+            with open('users.json','r') as fp:
+                r = json.loads(fp.read())
+        for d in r:
+            if email == d['email']:
+                r.remove(d)
+                break
+            else:
+                return '{} does not exist'.format(email)
+        with open('users.json','w') as fp:
+            fp.write(json.dumps(r))
         return '{} is deleted'.format(email)
 
 api.add_resource(UserList, '/api/users')
