@@ -98,7 +98,7 @@ class ArticleList(Resource):
             title = d['title']
             content = d['content']
             s += '[id: {}, user_id: {}, title: {}, content: {}]'.format(article_id, user_id, title, content)
-        return s
+        return s 
 
     def post(self):
         r_json = request.get_json()
@@ -117,27 +117,108 @@ class ArticleList(Resource):
         return ' The content of user {} is posted successfully'.format(user_id)
 
     def put(self):
-        
-        return ""
+        r_json = request.get_json()
+        article_id = r_json['id']
+        title = r_json['title']
+        content = r_json['content']
+        r = self.get_articles()
+        found = False
+        for idx, _ in enumerate(r):
+            if r[idx]['id'] == article_id:
+                found = True
+                r[idx]['title'] = title
+                r[idx]['content'] = content
+        if not found:
+            return 'article {} does not exist'.format(article_id)
+        with open(self.filename, 'w') as fp:
+            fp.write(json.dumps(r))
+        return 'update title and content of {} successfully'.format(article_id)
 
     def delete(self):
-        
+        r_json = request.get_json()
+        article_id = r_json['id']
+        r = self.get_articles()
+        found = False
+        for idx, _ in enumerate(r):
+            if r[idx]['id'] == article_id:
+                found = True
+                del r[idx]
+        if not found:
+            return 'article {} does not exist',format(article_id)
+        with open(self.filename, 'w') as fp:
+            fp.write(json.dumps(r))
         return '{} deleted successfully'.format(article_id)
 
 
 class CommentList(Resource):
+    filename = 'comments.json'
+
+    def get_comments(self):
+        comments = []
+        if os.path.exists(self.filename):
+            with open(self.filename, 'r') as fp:
+                comments = json.loads(fp.read())
+        return comments    
+    
     def get(self):
-        return ""
+        if not os.path.exists(self.filename):
+            return 'comments.json is not exists'
+        r = self.get_comments()
+        s = ''
+        for d in r:
+            comment_id = d['id']
+            user_id = d['user_id']
+            article_id = d['a_id']
+            content = d['content']
+            s += '[id: {}, user_id: {}, article_id: {}, content: {}]'.format(comment_id, user_id, article_id, content)
+        return s
 
     def post(self):
-        return ""
+        r_json = request.get_json()
+        user_id = r_json['user_id']
+        article_id = r_json['a_id']
+        content = r_json['content']
+        r = self.get_comments()
+        c_id = 0
+        for d in r:
+            c_id = max(c_id, d['id'])
+        c_id = c_id + 1
+        r_json['id'] = c_id
+        r.append(r_json)
+        with open(self.filename, 'w') as fp:
+            fp.write(json.dumps(r))
+        return 'The comment of user {} is posted successfully on article {}'.format(user_id, article_id)
 
     def put(self):
-        return ""
+        r_json = request.get_json()
+        comment_id = r_json['id']
+        content = r_json['content']
+        r = self.get_comments()
+        found = False
+        for idx, _ in enumerate(r):
+            if r[idx]['id'] == comment_id:
+                found = True
+                r[idx]['content'] = content
+        if not found:
+            return 'comment {} does not exist'.format(comment_id)
+        with open(self.filename, 'w') as fp:
+            fp.write(json.dumps(r))
+        return 'comment {} is updated successfully'.format(comment_id)
 
     def delete(self):
-        return ""
-
+        r_json = request.get_json()
+        comment_id = r_json['id']
+        r = self.get_comments()
+        found = False
+        for idx, _ in enumerate(r):
+            if r[idx]['id'] == comment_id:
+                found = True
+                del r[idx]
+        if not found:
+            return 'comment {} does not exist'.format(comment_id)
+        with open(self.filename, 'w') as fp:
+            fp.write(json.dumps(r))
+        return 'comment {} is deleted successfully'.format(comment_id)
 
 class LikeList(Resource):
     def get(self):
